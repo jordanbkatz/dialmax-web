@@ -43,5 +43,34 @@ npm run preview  # preview the production build
 
 Firebase web config lives in `src/firebase.ts` (project `dialmax-fabc1`).
 
-For deployment, add your hosting domain to Firebase Auth's authorized domains
-and publish `firestore.rules`.
+## Deploying to Cloudflare Pages
+
+This app is a static SPA, so it deploys to Cloudflare Pages with no server code.
+
+**Git-connected build settings** (repository root is this `web/` folder):
+
+| Setting | Value |
+| --- | --- |
+| Root directory | `/` (default) |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
+| Node version | `22` (pinned in `.node-version`) |
+
+**Direct upload via Wrangler:**
+
+```bash
+npm run build
+npx wrangler pages deploy dist --project-name <your-pages-project>
+```
+
+**Included config files:**
+
+- `public/_redirects` — SPA fallback (`/* /index.html 200`)
+- `public/_headers` — immutable caching for `/assets/*`, no-cache for
+  `index.html`, and basic security headers
+- `.node-version` — pins Node 22 for the Pages build image
+
+**Required after the first deploy:** add the assigned domain
+(`<project>.pages.dev`, plus any custom domain) to Firebase Auth's
+**Authorized domains** list, otherwise Google sign-in fails.
+
