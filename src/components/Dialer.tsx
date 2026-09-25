@@ -1,6 +1,5 @@
 import type { Lead } from '../types'
 import { RESULT_META } from '../types'
-import type { LeadField } from '../types'
 import { formatDateTime, formatPhone, isOverdue, telHref } from '../lib/format'
 import { CalendarIcon, ChevronRightIcon, PhoneIcon, SkipIcon, UsersIcon } from './Icons'
 
@@ -8,7 +7,6 @@ interface DialerProps {
   lead: Lead | null
   done: number
   remaining: number
-  importantFields: LeadField[]
   onLogResult: () => void
   onSkip: () => void
   onBackToQueue: () => void
@@ -18,7 +16,6 @@ export default function Dialer({
   lead,
   done,
   remaining,
-  importantFields,
   onLogResult,
   onSkip,
   onBackToQueue,
@@ -64,11 +61,16 @@ export default function Dialer({
 
         <div className="flex flex-col items-center text-center">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-brand-600/30 select-none">
-            {(lead.name || '?').trim().charAt(0).toUpperCase()}
+            {(lead.name || lead.company || '?').trim().charAt(0).toUpperCase()}
           </div>
           <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-900">
-            {lead.name || 'Unnamed lead'}
+            {lead.name || lead.company || 'Unnamed lead'}
           </h2>
+          {lead.name && lead.company && (
+            <p className="mt-0.5 text-sm font-semibold text-slate-500">
+              {lead.company}
+            </p>
+          )}
           <p className="mt-1 text-slate-500 font-medium">{formatPhone(lead.phone)}</p>
           {lead.result && (
             <span
@@ -79,19 +81,6 @@ export default function Dialer({
             </span>
           )}
         </div>
-
-        {importantFields.length > 0 && (
-          <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-3 text-left">
-            {importantFields.map((f) => (
-              <div key={f.key} className="min-w-0">
-                <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400 truncate">
-                  {f.label}
-                </dt>
-                <dd className="text-sm text-slate-700 truncate">{lead.fields[f.key] || '—'}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
 
         {lead.note && (
           <div className="mt-5 rounded-xl bg-slate-50 ring-1 ring-slate-100 px-4 py-3 text-left">

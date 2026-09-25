@@ -18,11 +18,12 @@ export interface Campaign {
 export interface Lead {
   id: string
   campaignId: string
-  /** Dynamic field map — everything that came from CSV or manual entry */
+  /** Dynamic field map — retained for compatibility or additional attributes */
   fields: Record<string, string>
-  /** Denormalized for display + search */
+  /** Denormalized core fields for display + search */
   name: string
   phone: string
+  company: string
   status: LeadStatus
   result: LeadResult | null
   note: string
@@ -43,12 +44,13 @@ export interface LeadField {
 }
 
 export interface NewLeadInput {
-  fields: Record<string, string>
+  fields?: Record<string, string>
   name: string
   phone: string
+  company: string
 }
 
-export const CORE_FIELD_KEYS = ['name', 'phone'] as const
+export const CORE_FIELD_KEYS = ['phone', 'name', 'company'] as const
 
 export const RESULT_META: Record<
   LeadResult,

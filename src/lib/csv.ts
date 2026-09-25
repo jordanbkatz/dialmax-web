@@ -39,6 +39,7 @@ export function keyToLabel(key: string): string {
 
 const PHONE_HEADER_HINTS = ['phone', 'mobile', 'cell', 'number', 'tel', 'telephone']
 const NAME_HEADER_HINTS = ['name', 'contact', 'full_name', 'fullname', 'lead']
+const COMPANY_HEADER_HINTS = ['company', 'organization', 'business', 'account', 'org', 'corp']
 
 export function detectPhoneColumn(headers: string[]): string | null {
   for (const h of headers) {
@@ -54,5 +55,14 @@ export function detectNameColumn(headers: string[], phoneKey: string | null): st
     const k = headerToKey(h)
     if (NAME_HEADER_HINTS.some((hint) => k === hint || k.endsWith(hint))) return k
   }
-  return candidates[0] ? headerToKey(candidates[0]) : null
+  return null
+}
+
+export function detectCompanyColumn(headers: string[], excludeKeys: (string | null)[]): string | null {
+  const candidates = headers.filter((h) => !excludeKeys.includes(headerToKey(h)))
+  for (const h of candidates) {
+    const k = headerToKey(h)
+    if (COMPANY_HEADER_HINTS.some((hint) => k === hint || k.includes(hint))) return k
+  }
+  return null
 }

@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { detectNameColumn, detectPhoneColumn, headerToKey, keyToLabel, parseCsv } from '../lib/csv'
+import { detectCompanyColumn, detectNameColumn, detectPhoneColumn, headerToKey, keyToLabel, parseCsv } from '../lib/csv'
 import type { ParsedCsv } from '../lib/csv'
 import type { LeadField, NewLeadInput } from '../types'
-import { ChevronDownIcon, ChevronUpIcon, UploadIcon, XIcon } from './Icons'
+import { UploadIcon, XIcon } from './Icons'
 
 interface UploadModalProps {
   busy: boolean
@@ -22,19 +22,21 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
   const [error, setError] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const [columns, setColumns] = useState<ColumnMeta[]>([])
-  const [nameKey, setNameKey] = useState<string>('')
   const [phoneKey, setPhoneKey] = useState<string>('')
+  const [nameKey, setNameKey] = useState<string>('')
+  const [companyKey, setCompanyKey] = useState<string>('')
   const fileInput = useRef<HTMLInputElement>(null)
 
   const loadCsv = (text: string) => {
     try {
       const result = parseCsv(text)
       if (!result.headers.length || !result.rows.length) {
-        setError('Could not find any rows with a header line. Expected CSV like "Name,Phone".')
+        setError('Could not find any rows with a header line. Expected CSV with column headers.')
         return
       }
       const phone = detectPhoneColumn(result.headers)
       const name = detectNameColumn(result.headers, phone)
+      const company = detectCompanyColumn(result.headers, [phone, name])
       setParsed(result)
       setColumns(
         result.headers.map((h) => {
@@ -43,12 +45,13 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
           return {
             key,
             label: existing?.label ?? keyToLabel(key),
-            important: existing?.important ?? ['company', 'email'].includes(key),
+            important: existing?.important ?? false,
           }
         }),
       )
       setPhoneKey(phone ?? '')
       setNameKey(name ?? '')
+      setCompanyKey(company ?? '')
       setError(null)
     } catch {
       setError('Failed to parse the file. Make sure it is valid CSV text.')
@@ -63,42 +66,27 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
     reader.readAsText(file)
   }
 
-  const moveColumn = (key: string, dir: -1 | 1) => {
-    setColumns((cols) => {
-      const idx = cols.findIndex((c) => c.key === key)
-      const target = idx + dir
-      if (idx < 0 || target < 0 || target >= cols.length) return cols
-      const next = [...cols]
-      ;[next[idx], next[target]] = [next[target], next[idx]]
-      return next
-    })
-  }
-
-  const toggleImportant = (key: string) => {
-    setColumns((cols) => cols.map((c) => (c.key === key ? { ...c, important: !c.important } : c)))
-  }
-
   const handleImport = async () => {
     if (!parsed || !phoneKey) return
-    const config: LeadField[] = columns.map((c) => ({ key: c.key, label: c.label, important: c.important }))
     const leads: NewLeadInput[] = []
     for (const row of parsed.rows) {
-      const fields: Record<string, string> = {}
+      const rawMap: Record<string, string> = {}
       for (const col of columns) {
         const header = parsed.headers.find((h) => headerToKey(h) === col.key)
         const value = (header ? row[header] : '').toString().trim()
-        fields[col.key] = value
+        rawMap[col.key] = value
       }
-      const phone = (fields[phoneKey] || '').trim()
+      const phone = (rawMap[phoneKey] || '').trim()
       if (!phone) continue
-      const name = nameKey ? (fields[nameKey] || '').trim() : ''
-      leads.push({ fields, name, phone })
+      const name = nameKey ? (rawMap[nameKey] || '').trim() : ''
+      const company = companyKey ? (rawMap[companyKey] || '').trim() : ''
+      leads.push({ name, phone, company })
     }
     if (!leads.length) {
       setError('No rows had a phone number.')
       return
     }
-    await onImport(leads, config)
+    await onImport(leads, [])
   }
 
   return (
@@ -180,24 +168,9 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
 
               {error && <p className="text-sm text-rose-500">{error}</p>}
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-500">Name column</label>
-                  <select
-                    value={nameKey}
-                    onChange={(e) => setNameKey(e.target.value)}
-                    className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
-                  >
-                    <option value="">— none —</option>
-                    {columns.map((c) => (
-                      <option key={c.key} value={c.key}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500">Phone column</label>
+                  <label className="text-xs font-semibold text-slate-500">Phone column (Required) *</label>
                   <select
                     value={phoneKey}
                     onChange={(e) => setPhoneKey(e.target.value)}
@@ -205,7 +178,7 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
                       phoneKey ? 'ring-slate-200 focus:ring-2 focus:ring-brand-400' : 'ring-rose-300'
                     }`}
                   >
-                    <option value="">— required —</option>
+                    <option value="">— select phone column —</option>
                     {columns.map((c) => (
                       <option key={c.key} value={c.key}>
                         {c.label}
@@ -213,75 +186,59 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
                     ))}
                   </select>
                 </div>
-              </div>
 
-              <div>
-                <p className="text-xs font-semibold text-slate-500 mb-2">
-                  Fields — star the ones that should always show on a card
-                </p>
-                <div className="rounded-2xl ring-1 ring-slate-200 divide-y divide-slate-100 overflow-hidden">
-                  {columns
-                    .filter((c) => c.key !== nameKey && c.key !== phoneKey)
-                    .map((c) => (
-                      <div key={c.key} className="flex items-center gap-2 px-3.5 py-2.5 bg-white">
-                        <button
-                          onClick={() => toggleImportant(c.key)}
-                          className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-lg transition-transform hover:scale-110 active:scale-95 ${
-                            c.important ? 'text-amber-400' : 'text-slate-200 hover:text-slate-300'
-                          }`}
-                          aria-label={c.important ? 'Remove from card' : 'Always show on card'}
-                        >
-                          ★
-                        </button>
-                        <input
-                          value={c.label}
-                          onChange={(e) =>
-                            setColumns((cols) =>
-                              cols.map((x) => (x.key === c.key ? { ...x, label: e.target.value } : x)),
-                            )
-                          }
-                          className="min-w-0 flex-1 bg-transparent text-sm font-medium text-slate-700 outline-none"
-                        />
-                        {c.important && (
-                          <div className="flex flex-col">
-                            <button
-                              onClick={() => moveColumn(c.key, -1)}
-                              className="p-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors"
-                              aria-label="Move up"
-                            >
-                              <ChevronUpIcon className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => moveColumn(c.key, 1)}
-                              className="p-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded transition-colors"
-                              aria-label="Move down"
-                            >
-                              <ChevronDownIcon className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Name column</label>
+                    <select
+                      value={nameKey}
+                      onChange={(e) => setNameKey(e.target.value)}
+                      className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
+                    >
+                      <option value="">— none / blank —</option>
+                      {columns.map((c) => (
+                        <option key={c.key} value={c.key}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Company column</label>
+                    <select
+                      value={companyKey}
+                      onChange={(e) => setCompanyKey(e.target.value)}
+                      className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
+                    >
+                      <option value="">— none / blank —</option>
+                      {columns.map((c) => (
+                        <option key={c.key} value={c.key}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {parsed.rows[0] && (
                 <div className="rounded-2xl ring-1 ring-slate-200 overflow-hidden">
                   <p className="px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 bg-slate-50">
-                    Preview
+                    Lead Sample Preview
                   </p>
-                  <div className="px-3.5 py-2.5 text-xs text-slate-600 space-y-0.5">
-                    {columns
-                      .filter((c) => c.key === nameKey || c.key === phoneKey || c.important)
-                      .slice(0, 4)
-                      .map((c) => (
-                        <div key={c.key} className="flex justify-between gap-3">
-                          <span className="text-slate-400">{c.label}</span>
-                          <span className="truncate">
-                            {rowValue(parsed, c.key) || '—'}
-                          </span>
-                        </div>
-                      ))}
+                  <div className="px-3.5 py-2.5 text-xs text-slate-600 space-y-1">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400 font-medium">Phone:</span>
+                      <span className="truncate font-semibold">{rowValue(parsed, phoneKey) || '—'}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400 font-medium">Name:</span>
+                      <span className="truncate">{rowValue(parsed, nameKey) || '—'}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400 font-medium">Company:</span>
+                      <span className="truncate">{rowValue(parsed, companyKey) || '—'}</span>
+                    </div>
                   </div>
                 </div>
               )}

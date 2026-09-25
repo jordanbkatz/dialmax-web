@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { Lead } from '../types'
 import { RESULT_META } from '../types'
-import type { LeadField } from '../types'
 import { formatDateTime, formatPhone, isOverdue, telHref } from '../lib/format'
 import {
   CalendarIcon,
@@ -37,8 +36,6 @@ export function NewChip() {
 
 interface LeadCardProps {
   lead: Lead
-  importantFields: LeadField[]
-  fieldMeta: (key: string) => LeadField
   onCall: (lead: Lead) => void
   onLogResult: (lead: Lead) => void
   onEdit: (lead: Lead) => void
@@ -48,8 +45,6 @@ interface LeadCardProps {
 
 export default function LeadCard({
   lead,
-  importantFields,
-  fieldMeta,
   onCall,
   onLogResult,
   onEdit,
@@ -57,12 +52,7 @@ export default function LeadCard({
   onDelete,
 }: LeadCardProps) {
   const [expanded, setExpanded] = useState(false)
-  const extraFields = importantFields.length
-    ? Object.keys(lead.fields).filter(
-        (k) => k !== 'name' && k !== 'phone' && !importantFields.some((f) => f.key === k),
-      )
-    : Object.keys(lead.fields).filter((k) => k !== 'name' && k !== 'phone')
-  const hasExtra = extraFields.length > 0
+  const hasExtra = Boolean(lead.note)
 
   return (
     <div className="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/70 overflow-hidden">
@@ -71,43 +61,54 @@ export default function LeadCard({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-[15px] font-semibold text-slate-900 truncate">
-                {lead.name || 'Unnamed lead'}
+                {lead.name || lead.company || 'Unnamed lead'}
               </h3>
               {lead.status === 'new' ? <NewChip /> : <ResultChip lead={lead} />}
             </div>
+            {lead.name && lead.company && (
+              <p className="text-xs font-medium text-slate-500 truncate mt-0.5">
+                {lead.company}
+              </p>
+            )}
             <a
               href={telHref(lead.phone)}
-              className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline transition-colors"
+              className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 hover:underline transition-colors"
             >
               <PhoneIcon className="w-3.5 h-3.5" />
               {formatPhone(lead.phone)}
             </a>
           </div>
-          {hasExtra && (
+          <div className="flex items-center gap-1 shrink-0">
             <button
-              onClick={() => setExpanded((v) => !v)}
-              className="shrink-0 p-1.5 -m-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-150"
-              aria-label={expanded ? 'Collapse details' : 'Expand details'}
+              onClick={() => onEdit(lead)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all duration-150"
+              title="Edit lead"
+              aria-label="Edit lead"
             >
-              <ChevronDownIcon
-                className={`w-5 h-5 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
-              />
+              <PencilIcon className="w-4 h-4" />
             </button>
-          )}
+            <button
+              onClick={() => onDelete(lead)}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 active:scale-95 transition-all duration-150"
+              title="Delete lead"
+              aria-label="Delete lead"
+            >
+              <TrashIcon className="w-4 h-4" />
+            </button>
+            {hasExtra && (
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-150"
+                aria-label={expanded ? 'Collapse details' : 'Expand details'}
+                title={expanded ? 'Collapse note' : 'Show note'}
+              >
+                <ChevronDownIcon
+                  className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+                />
+              </button>
+            )}
+          </div>
         </div>
-
-        {importantFields.length > 0 && (
-          <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
-            {importantFields.map((f) => (
-              <div key={f.key} className="min-w-0">
-                <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-400 truncate">
-                  {f.label}
-                </dt>
-                <dd className="text-sm text-slate-700 truncate">{lead.fields[f.key] || '—'}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
 
         {(lead.callbackAt || lead.meetingAt || lead.emailFollowUp) && (
           <div className="mt-3 flex flex-wrap gap-2">
@@ -138,6 +139,13 @@ export default function LeadCard({
           </div>
         )}
 
+        {lead.note && (
+          <div className="mt-3 pt-2.5 border-t border-slate-100">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">Note</p>
+            <p className="text-xs text-slate-600 whitespace-pre-wrap">{lead.note}</p>
+          </div>
+        )}
+
         <div className="mt-4 flex gap-2">
           {lead.status === 'called' ? (
             <button
@@ -164,43 +172,6 @@ export default function LeadCard({
           </button>
         </div>
       </div>
-
-      {expanded && (
-        <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-3">
-          {hasExtra && (
-            <dl className="space-y-2">
-              {extraFields.map((k) => (
-                <div key={k} className="flex justify-between gap-4">
-                  <dt className="text-xs font-medium text-slate-400 shrink-0">{fieldMeta(k).label}</dt>
-                  <dd className="text-sm text-slate-700 text-right break-words">{lead.fields[k] || '—'}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-          {lead.note && (
-            <div className={hasExtra ? 'mt-3 pt-3 border-t border-slate-200/70' : ''}>
-              <p className="text-xs font-medium text-slate-400 mb-1">Last call note</p>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{lead.note}</p>
-            </div>
-          )}
-          <div className="mt-3 pt-3 border-t border-slate-200/70 flex justify-end gap-1">
-            <button
-              onClick={() => onEdit(lead)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-200/80 hover:scale-105 active:scale-95 transition-all duration-150"
-            >
-              <PencilIcon className="w-3.5 h-3.5" />
-              Edit
-            </button>
-            <button
-              onClick={() => onDelete(lead)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all duration-150"
-            >
-              <TrashIcon className="w-3.5 h-3.5" />
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

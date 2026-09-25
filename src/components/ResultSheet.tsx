@@ -62,7 +62,7 @@ export default function ResultSheet({ lead, busy, onSave, onClose }: ResultSheet
         <div className="flex items-center justify-between px-5 pt-4 pb-2 border-b border-slate-100">
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Call result</p>
-            <h2 className="text-base font-semibold text-slate-900 truncate">{lead.name || 'Unnamed lead'}</h2>
+            <h2 className="text-base font-semibold text-slate-900 truncate">{lead.name || lead.company || 'Unnamed lead'}</h2>
           </div>
           <button
             onClick={onClose}

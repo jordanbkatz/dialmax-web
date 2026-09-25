@@ -169,6 +169,7 @@ interface LeadDoc {
   fields?: Record<string, string>
   name?: string
   phone?: string
+  company?: string
   status?: 'new' | 'called'
   result?: LeadResult | null
   note?: string
@@ -187,6 +188,7 @@ function toLead(id: string, campaignId: string, data: LeadDoc): Lead {
     fields: data.fields ?? {},
     name: data.name ?? '',
     phone: data.phone ?? '',
+    company: data.company ?? '',
     status: data.status ?? 'new',
     result: data.result ?? null,
     note: data.note ?? '',
@@ -222,9 +224,10 @@ export async function addLeads(campaignId: string, leads: NewLeadInput[]): Promi
     chunk.forEach((lead, j) => {
       const ref = doc(leadsCol(campaignId))
       batch.set(ref, {
-        fields: lead.fields,
+        fields: lead.fields ?? {},
         name: lead.name,
         phone: lead.phone,
+        company: lead.company,
         status: 'new',
         result: null,
         note: '',
@@ -268,7 +271,7 @@ export async function logCallResult(
 export async function saveLeadDetails(
   campaignId: string,
   leadId: string,
-  data: { fields: Record<string, string>; name: string; phone: string },
+  data: { fields?: Record<string, string>; name: string; phone: string; company: string },
 ): Promise<void> {
   const ref = doc(leadsCol(campaignId), leadId)
   await updateDoc(ref, data)

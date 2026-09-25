@@ -16,7 +16,6 @@ import Dialer from './components/Dialer'
 import ResultSheet from './components/ResultSheet'
 import UploadModal from './components/UploadModal'
 import LeadFormModal from './components/LeadFormModal'
-import FieldManager from './components/FieldManager'
 import ShareCampaignModal from './components/ShareCampaignModal'
 import CampaignModal from './components/CampaignModal'
 import ConfirmModal from './components/ConfirmModal'
@@ -29,13 +28,34 @@ import {
   PlusIcon,
   SearchIcon,
   ShareIcon,
-  SlidersIcon,
   TrashIcon,
   UploadIcon,
   UsersIcon,
+  XIcon,
 } from './components/Icons'
 
 type View = 'list' | 'dialer'
+
+function getUserInitials(name?: string | null, email?: string | null): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+    }
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase()
+    }
+  }
+  if (email && email.trim()) {
+    const local = email.trim().split('@')[0]
+    const parts = local.split(/[._-]+/).filter(Boolean)
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase()
+    }
+    return local.slice(0, 2).toUpperCase()
+  }
+  return 'U'
+}
 
 const FILTERS: { id: LeadFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -79,7 +99,6 @@ export default function App() {
 
   // Modals state
   const [showUpload, setShowUpload] = useState(false)
-  const [showFields, setShowFields] = useState(false)
   const [shareCampaignTarget, setShareCampaignTarget] = useState<Campaign | null>(null)
   const [campaignModal, setCampaignModal] = useState<{ mode: 'create' | 'edit'; target?: Campaign } | null>(null)
   const [deleteCampaignTarget, setDeleteCampaignTarget] = useState<Campaign | null>(null)
@@ -104,8 +123,6 @@ export default function App() {
     [],
   )
 
-  const importantFields = fieldCfg.importantFields
-
   // Filtered campaigns for campaigns list view
   const filteredCampaigns = useMemo(() => {
     const q = campaignSearch.trim().toLowerCase()
@@ -120,7 +137,10 @@ export default function App() {
 
   // Filtered leads for campaign view
   const filteredLeads = useMemo(() => {
-    const q = search.trim().toLowerCase()
+    const rawQ = search.trim()
+    const q = rawQ.toLowerCase()
+    const qDigits = rawQ.replace(/\D/g, '')
+
     let list: Lead[]
     if (filter === 'all') {
       list = leads
@@ -131,12 +151,19 @@ export default function App() {
     }
 
     if (q) {
-      list = list.filter(
-        (l) =>
-          l.name.toLowerCase().includes(q) ||
-          l.phone.replace(/\D/g, '').includes(q.replace(/\D/g, '')) ||
-          Object.values(l.fields).some((v) => v.toLowerCase().includes(q)),
-      )
+      list = list.filter((l) => {
+        const name = (l.name || '').toLowerCase()
+        const company = (l.company || '').toLowerCase()
+        const phone = (l.phone || '').toLowerCase()
+        const phoneDigits = (l.phone || '').replace(/\D/g, '')
+
+        const matchesName = name.includes(q)
+        const matchesCompany = company.includes(q)
+        const matchesPhoneText = phone.includes(q)
+        const matchesPhoneDigits = qDigits.length > 0 && phoneDigits.includes(qDigits)
+
+        return matchesName || matchesCompany || matchesPhoneText || matchesPhoneDigits
+      })
     }
     return list
   }, [leads, filter, search])
@@ -281,7 +308,7 @@ export default function App() {
     }
   }
 
-  const handleSaveLead = async (data: { fields: Record<string, string>; name: string; phone: string }) => {
+  const handleSaveLead = async (data: { name: string; phone: string; company: string }) => {
     if (!activeCampaign || !leadForm) return
     setBusy(true)
     try {
@@ -343,14 +370,10 @@ export default function App() {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setShowMenu(true)}
-                className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center text-base font-bold text-slate-600 overflow-hidden ring-2 ring-transparent hover:ring-brand-400 hover:scale-105 active:scale-95 transition-all duration-150 shrink-0"
+                className="w-11 h-11 rounded-full bg-gradient-to-br from-brand-600 to-slate-900 flex items-center justify-center text-sm font-black text-white shadow-sm ring-2 ring-brand-100 hover:ring-brand-400 hover:scale-105 active:scale-95 transition-all duration-150 shrink-0 select-none tracking-wider"
                 aria-label="User menu"
               >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  (user.displayName || user.email || '?').charAt(0).toUpperCase()
-                )}
+                {getUserInitials(user.displayName, user.email)}
               </button>
             </div>
           </div>
@@ -365,7 +388,7 @@ export default function App() {
           </div>
         ) : !activeCampaign ? (
           /* Default View: Campaigns List */
-          <CampaignsListView />
+          CampaignsListView()
         ) : view === 'dialer' ? (
           /* Dialer View */
           <div className="pt-4">
@@ -384,7 +407,6 @@ export default function App() {
               lead={dialLead}
               done={stats.finished}
               remaining={dialQueue.length}
-              importantFields={importantFields}
               onLogResult={() => dialLead && setResultLead(dialLead)}
               onSkip={() => setDialIndex((i) => i + 1)}
               onBackToQueue={() => setView('list')}
@@ -392,7 +414,7 @@ export default function App() {
           </div>
         ) : (
           /* Campaign Detail Leads View */
-          <CampaignDetailView />
+          CampaignDetailView()
         )}
       </main>
 
@@ -412,17 +434,6 @@ export default function App() {
           existingConfig={fieldCfg.config}
           onClose={() => setShowUpload(false)}
           onImport={handleImport}
-        />
-      )}
-      {showFields && activeCampaign && (
-        <FieldManager
-          allKeys={fieldCfg.allKeys}
-          config={fieldCfg.config}
-          busy={busy}
-          onClose={() => setShowFields(false)}
-          onToggleImportant={fieldCfg.toggleImportant}
-          onMove={fieldCfg.moveField}
-          onSetLabel={fieldCfg.setLabel}
         />
       )}
       {shareCampaignTarget && (
@@ -452,7 +463,6 @@ export default function App() {
         <LeadFormModal
           key={leadForm.lead?.id ?? 'new'}
           lead={leadForm.lead}
-          importantFields={importantFields}
           busy={busy}
           onClose={() => setLeadForm(null)}
           onSave={handleSaveLead}
@@ -488,10 +498,6 @@ export default function App() {
             setShowMenu(false)
             setShowUpload(true)
           }}
-          onFields={() => {
-            setShowMenu(false)
-            setShowFields(true)
-          }}
           onShare={() => {
             setShowMenu(false)
             if (activeCampaign) setShareCampaignTarget(activeCampaign)
@@ -519,7 +525,7 @@ export default function App() {
       {deleteLeadTarget && (
         <ConfirmModal
           title="Delete Lead?"
-          message={`Are you sure you want to delete ${deleteLeadTarget.name ? `"${deleteLeadTarget.name}"` : 'this lead'}? This action cannot be undone.`}
+          message={`Are you sure you want to delete ${deleteLeadTarget.name || deleteLeadTarget.company ? `"${deleteLeadTarget.name || deleteLeadTarget.company}"` : 'this lead'}? This action cannot be undone.`}
           confirmLabel="Delete Lead"
           busy={busy}
           onConfirm={handleConfirmDeleteLead}
@@ -735,14 +741,6 @@ export default function App() {
             >
               <ShareIcon className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => setShowFields(true)}
-              className="p-2.5 rounded-xl text-slate-600 bg-slate-200/80 hover:bg-slate-300 hover:text-slate-900 active:scale-95 transition-all duration-150"
-              title="Manage lead fields"
-              aria-label="Manage fields"
-            >
-              <SlidersIcon className="w-5 h-5" />
-            </button>
             {activeCampaign.ownerUid === uid && (
               <button
                 onClick={() => setDeleteCampaignTarget(activeCampaign)}
@@ -790,17 +788,6 @@ export default function App() {
           </button>
         </div>
 
-        {/* Search Leads */}
-        <div className="relative">
-          <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search leads in this campaign…"
-            className="w-full rounded-xl border-0 bg-white pl-10 pr-4 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-400 shadow-xs"
-          />
-        </div>
-
         {/* Lead Tabs: All, Queue, Finished */}
         <div className="flex gap-2">
           {FILTERS.map((f) => {
@@ -833,6 +820,28 @@ export default function App() {
           })}
         </div>
 
+        {/* Search Leads - Below Tabs */}
+        <div className="relative">
+          <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, company, or phone number…"
+            className="w-full rounded-xl border-0 bg-white pl-10 pr-9 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-400 shadow-xs"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors"
+              title="Clear search"
+              aria-label="Clear search"
+            >
+              <XIcon className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
         {/* Lead List */}
         <div className="space-y-3">
           {leadsLoading ? (
@@ -845,6 +854,8 @@ export default function App() {
             <EmptyState
               filter={filter}
               hasLeads={leads.length > 0}
+              searchQuery={search}
+              onClearSearch={() => setSearch('')}
               onUpload={() => setShowUpload(true)}
               onAdd={() => setLeadForm({ lead: null })}
             />
@@ -853,8 +864,6 @@ export default function App() {
               <LeadCard
                 key={lead.id}
                 lead={lead}
-                importantFields={importantFields}
-                fieldMeta={fieldCfg.fieldMeta}
                 onCall={callLead}
                 onLogResult={(l) => setResultLead(l)}
                 onEdit={(l) => setLeadForm({ lead: l })}
@@ -917,11 +926,15 @@ function SkeletonCard() {
 function EmptyState({
   filter,
   hasLeads,
+  searchQuery,
+  onClearSearch,
   onUpload,
   onAdd,
 }: {
   filter: LeadFilter
   hasLeads: boolean
+  searchQuery?: string
+  onClearSearch?: () => void
   onUpload: () => void
   onAdd: () => void
 }) {
@@ -953,8 +966,31 @@ function EmptyState({
       </div>
     )
   }
+
+  if (searchQuery && searchQuery.trim()) {
+    return (
+      <div className="rounded-3xl bg-white shadow-xs ring-1 ring-slate-200/70 px-6 py-12 text-center">
+        <div className="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+          <SearchIcon className="w-6 h-6" />
+        </div>
+        <h3 className="mt-3 text-base font-bold text-slate-900">No results found</h3>
+        <p className="mt-1 text-sm text-slate-500 max-w-sm mx-auto">
+          No leads match <span className="font-semibold text-slate-700">"{searchQuery.trim()}"</span>.
+        </p>
+        {onClearSearch && (
+          <button
+            onClick={onClearSearch}
+            className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Clear search
+          </button>
+        )}
+      </div>
+    )
+  }
+
   const msg: Record<LeadFilter, string> = {
-    all: 'No leads found matching your search.',
+    all: 'No leads found in this campaign.',
     queue: 'No new leads in the queue. Upload more leads or requeue finished leads.',
     finished: 'No calls finished yet. Work the queue to log call results.',
   }
@@ -974,7 +1010,6 @@ function MenuSheet({
   onEditCampaign,
   onDeleteCampaign,
   onUpload,
-  onFields,
   onShare,
   onLogout,
 }: {
@@ -986,7 +1021,6 @@ function MenuSheet({
   onEditCampaign: () => void
   onDeleteCampaign: () => void
   onUpload: () => void
-  onFields: () => void
   onShare: () => void
   onLogout: () => void
 }) {
@@ -1035,13 +1069,6 @@ function MenuSheet({
             >
               <UploadIcon className="w-5 h-5 text-slate-400" />
               Upload Leads to Campaign
-            </button>
-            <button
-              onClick={onFields}
-              className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-700 hover:translate-x-1 transition-all duration-150"
-            >
-              <SlidersIcon className="w-5 h-5 text-slate-400" />
-              Manage Campaign Fields
             </button>
             {isOwner && (
               <button
