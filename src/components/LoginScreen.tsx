@@ -10,8 +10,8 @@ export default function LoginScreen({ onSignIn }: { onSignIn: () => Promise<void
     setError(null)
     try {
       await onSignIn()
-    } catch {
-      setError('Sign-in failed. Please try again.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sign-in failed. Please try again.')
     } finally {
       setBusy(false)
     }
