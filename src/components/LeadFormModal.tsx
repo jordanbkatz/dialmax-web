@@ -7,13 +7,14 @@ interface LeadFormModalProps {
   lead: Lead | null
   busy: boolean
   onClose: () => void
-  onSave: (data: { name: string; phone: string; company: string }) => Promise<void>
+  onSave: (data: { name: string; phone: string; company: string; website: string }) => Promise<void>
 }
 
 export default function LeadFormModal({ lead, busy, onClose, onSave }: LeadFormModalProps) {
   const [phone, setPhone] = useState(lead?.phone ?? '')
   const [name, setName] = useState(lead?.name ?? '')
   const [company, setCompany] = useState(lead?.company ?? '')
+  const [website, setWebsite] = useState(lead?.website ?? '')
 
   const canSave = phone.trim().length > 0 && !busy
 
@@ -22,6 +23,7 @@ export default function LeadFormModal({ lead, busy, onClose, onSave }: LeadFormM
       name: name.trim(),
       phone: phone.trim(),
       company: company.trim(),
+      website: website.trim(),
     })
   }
 
@@ -66,6 +68,17 @@ export default function LeadFormModal({ lead, busy, onClose, onSave }: LeadFormM
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="Acme Corp"
+              autoComplete="off"
+              className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3.5 py-3 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-300"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500">Website</label>
+            <input
+              value={website}
+              onChange={(e) => setWebsite(e.target.value)}
+              placeholder="example.com"
+              type="text"
               autoComplete="off"
               className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3.5 py-3 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-300"
             />

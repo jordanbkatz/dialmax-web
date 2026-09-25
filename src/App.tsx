@@ -156,15 +156,23 @@ export default function App() {
       list = list.filter((l) => {
         const name = (l.name || '').toLowerCase()
         const company = (l.company || '').toLowerCase()
+        const website = (l.website || '').toLowerCase()
         const phone = (l.phone || '').toLowerCase()
         const phoneDigits = (l.phone || '').replace(/\D/g, '')
 
         const matchesName = name.includes(q)
         const matchesCompany = company.includes(q)
+        const matchesWebsite = website.includes(q)
         const matchesPhoneText = phone.includes(q)
         const matchesPhoneDigits = qDigits.length > 0 && phoneDigits.includes(qDigits)
 
-        return matchesName || matchesCompany || matchesPhoneText || matchesPhoneDigits
+        return (
+          matchesName ||
+          matchesCompany ||
+          matchesWebsite ||
+          matchesPhoneText ||
+          matchesPhoneDigits
+        )
       })
     }
     return list
@@ -327,7 +335,7 @@ export default function App() {
     }
   }
 
-  const handleSaveLead = async (data: { name: string; phone: string; company: string }) => {
+  const handleSaveLead = async (data: { name: string; phone: string; company: string; website: string }) => {
     if (!activeCampaign || !leadForm) return
     setBusy(true)
     try {
@@ -859,7 +867,7 @@ export default function App() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by name, company, or phone number…"
+              placeholder="Search by name, company, website, or phone…"
               className="w-full rounded-xl border-0 bg-white pl-10 pr-9 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-400 shadow-xs"
             />
             {search && (

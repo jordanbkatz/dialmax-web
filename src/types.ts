@@ -24,6 +24,7 @@ export interface Lead {
   name: string
   phone: string
   company: string
+  website: string
   status: LeadStatus
   result: LeadResult | null
   note: string
@@ -48,9 +49,10 @@ export interface NewLeadInput {
   name: string
   phone: string
   company: string
+  website?: string
 }
 
-export const CORE_FIELD_KEYS = ['phone', 'name', 'company'] as const
+export const CORE_FIELD_KEYS = ['phone', 'name', 'company', 'website'] as const
 
 export const RESULT_META: Record<
   LeadResult,

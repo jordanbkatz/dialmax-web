@@ -5,12 +5,24 @@ import { formatDateTime, formatPhone, isOverdue, telHref } from '../lib/format'
 import {
   CalendarIcon,
   ChevronDownIcon,
+  GlobeIcon,
   MailIcon,
   PencilIcon,
   PhoneIcon,
   RefreshIcon,
   TrashIcon,
 } from './Icons'
+
+function formatWebsiteHref(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+function displayWebsite(url: string): string {
+  return url.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '')
+}
 
 export function ResultChip({ lead }: { lead: Lead }) {
   if (lead.status !== 'called' || !lead.result) return null
@@ -70,13 +82,27 @@ export default function LeadCard({
                 {lead.company}
               </p>
             )}
-            <a
-              href={telHref(lead.phone)}
-              className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 hover:underline transition-colors"
-            >
-              <PhoneIcon className="w-3.5 h-3.5" />
-              {formatPhone(lead.phone)}
-            </a>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <a
+                href={telHref(lead.phone)}
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 hover:text-brand-700 hover:underline transition-colors"
+              >
+                <PhoneIcon className="w-3.5 h-3.5" />
+                {formatPhone(lead.phone)}
+              </a>
+              {lead.website && (
+                <a
+                  href={formatWebsiteHref(lead.website)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-brand-600 hover:underline transition-colors truncate max-w-[200px]"
+                  title={lead.website}
+                >
+                  <GlobeIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{displayWebsite(lead.website)}</span>
+                </a>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { detectCompanyColumn, detectNameColumn, detectPhoneColumn, headerToKey, keyToLabel, parseCsv } from '../lib/csv'
+import { detectCompanyColumn, detectNameColumn, detectPhoneColumn, detectWebsiteColumn, headerToKey, keyToLabel, parseCsv } from '../lib/csv'
 import type { ParsedCsv } from '../lib/csv'
 import type { LeadField, NewLeadInput } from '../types'
 import { UploadIcon, XIcon } from './Icons'
@@ -25,6 +25,7 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
   const [phoneKey, setPhoneKey] = useState<string>('')
   const [nameKey, setNameKey] = useState<string>('')
   const [companyKey, setCompanyKey] = useState<string>('')
+  const [websiteKey, setWebsiteKey] = useState<string>('')
   const fileInput = useRef<HTMLInputElement>(null)
 
   const loadCsv = (text: string) => {
@@ -37,6 +38,7 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
       const phone = detectPhoneColumn(result.headers)
       const name = detectNameColumn(result.headers, phone)
       const company = detectCompanyColumn(result.headers, [phone, name])
+      const website = detectWebsiteColumn(result.headers, [phone, name, company])
       setParsed(result)
       setColumns(
         result.headers.map((h) => {
@@ -52,6 +54,7 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
       setPhoneKey(phone ?? '')
       setNameKey(name ?? '')
       setCompanyKey(company ?? '')
+      setWebsiteKey(website ?? '')
       setError(null)
     } catch {
       setError('Failed to parse the file. Make sure it is valid CSV text.')
@@ -80,7 +83,8 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
       if (!phone) continue
       const name = nameKey ? (rawMap[nameKey] || '').trim() : ''
       const company = companyKey ? (rawMap[companyKey] || '').trim() : ''
-      leads.push({ name, phone, company })
+      const website = websiteKey ? (rawMap[websiteKey] || '').trim() : ''
+      leads.push({ name, phone, company, website })
     }
     if (!leads.length) {
       setError('No rows had a phone number.')
@@ -187,9 +191,9 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
-                    <label className="text-xs font-semibold text-slate-500">Name column</label>
+                    <label className="text-xs font-semibold text-slate-500">Name</label>
                     <select
                       value={nameKey}
                       onChange={(e) => setNameKey(e.target.value)}
@@ -204,10 +208,25 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-slate-500">Company column</label>
+                    <label className="text-xs font-semibold text-slate-500">Company</label>
                     <select
                       value={companyKey}
                       onChange={(e) => setCompanyKey(e.target.value)}
+                      className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
+                    >
+                      <option value="">— none / blank —</option>
+                      {columns.map((c) => (
+                        <option key={c.key} value={c.key}>
+                          {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500">Website</label>
+                    <select
+                      value={websiteKey}
+                      onChange={(e) => setWebsiteKey(e.target.value)}
                       className="mt-1 w-full rounded-xl border-0 bg-slate-50 px-3 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none"
                     >
                       <option value="">— none / blank —</option>
@@ -238,6 +257,10 @@ export default function UploadModal({ busy, existingConfig, onClose, onImport }:
                     <div className="flex justify-between gap-3">
                       <span className="text-slate-400 font-medium">Company:</span>
                       <span className="truncate">{rowValue(parsed, companyKey) || '—'}</span>
+                    </div>
+                    <div className="flex justify-between gap-3">
+                      <span className="text-slate-400 font-medium">Website:</span>
+                      <span className="truncate">{rowValue(parsed, websiteKey) || '—'}</span>
                     </div>
                   </div>
                 </div>

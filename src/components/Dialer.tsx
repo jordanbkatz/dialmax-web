@@ -1,7 +1,18 @@
 import type { Lead } from '../types'
 import { RESULT_META } from '../types'
 import { formatDateTime, formatPhone, isOverdue, telHref } from '../lib/format'
-import { CalendarIcon, ChevronRightIcon, PhoneIcon, SkipIcon, UsersIcon } from './Icons'
+import { CalendarIcon, ChevronRightIcon, GlobeIcon, PhoneIcon, SkipIcon, UsersIcon } from './Icons'
+
+function formatWebsiteHref(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
+function displayWebsite(url: string): string {
+  return url.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '')
+}
 
 interface DialerProps {
   lead: Lead | null
@@ -70,6 +81,18 @@ export default function Dialer({
             <p className="mt-0.5 text-sm font-semibold text-slate-500">
               {lead.company}
             </p>
+          )}
+          {lead.website && (
+            <a
+              href={formatWebsiteHref(lead.website)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 hover:underline transition-colors max-w-xs truncate"
+              title={lead.website}
+            >
+              <GlobeIcon className="w-3.5 h-3.5 text-brand-500 shrink-0" />
+              <span className="truncate">{displayWebsite(lead.website)}</span>
+            </a>
           )}
           <p className="mt-1 text-slate-500 font-medium">{formatPhone(lead.phone)}</p>
           {lead.result && (

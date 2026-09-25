@@ -170,6 +170,7 @@ interface LeadDoc {
   name?: string
   phone?: string
   company?: string
+  website?: string
   status?: 'new' | 'called'
   result?: LeadResult | null
   note?: string
@@ -189,6 +190,7 @@ function toLead(id: string, campaignId: string, data: LeadDoc): Lead {
     name: data.name ?? '',
     phone: data.phone ?? '',
     company: data.company ?? '',
+    website: data.website ?? '',
     status: data.status ?? 'new',
     result: data.result ?? null,
     note: data.note ?? '',
@@ -228,6 +230,7 @@ export async function addLeads(campaignId: string, leads: NewLeadInput[]): Promi
         name: lead.name,
         phone: lead.phone,
         company: lead.company,
+        website: lead.website ?? '',
         status: 'new',
         result: null,
         note: '',
@@ -271,7 +274,7 @@ export async function logCallResult(
 export async function saveLeadDetails(
   campaignId: string,
   leadId: string,
-  data: { fields?: Record<string, string>; name: string; phone: string; company: string },
+  data: { fields?: Record<string, string>; name: string; phone: string; company: string; website?: string },
 ): Promise<void> {
   const ref = doc(leadsCol(campaignId), leadId)
   await updateDoc(ref, data)
