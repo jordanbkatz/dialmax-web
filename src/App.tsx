@@ -4,6 +4,7 @@ import { useCampaigns, useFieldConfig, useLeads } from './hooks/useLeads'
 import {
   addLeads,
   deleteLead,
+  deleteLeads,
   logCallResult,
   resetLeadToNew,
   saveLeadDetails,
@@ -103,6 +104,7 @@ export default function App() {
   const [campaignModal, setCampaignModal] = useState<{ mode: 'create' | 'edit'; target?: Campaign } | null>(null)
   const [deleteCampaignTarget, setDeleteCampaignTarget] = useState<Campaign | null>(null)
   const [deleteLeadTarget, setDeleteLeadTarget] = useState<Lead | null>(null)
+  const [deleteBatchTarget, setDeleteBatchTarget] = useState<{ leads: Lead[]; query: string } | null>(null)
   const [showMenu, setShowMenu] = useState(false)
   const [leadForm, setLeadForm] = useState<{ lead: Lead | null } | null>(null)
   const [resultLead, setResultLead] = useState<Lead | null>(null)
@@ -303,6 +305,23 @@ export default function App() {
       showToast('Lead deleted')
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Could not delete lead')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleConfirmDeleteBatch = async () => {
+    if (!activeCampaign || !deleteBatchTarget || deleteBatchTarget.leads.length === 0) return
+    setBusy(true)
+    try {
+      const ids = deleteBatchTarget.leads.map((l) => l.id)
+      await deleteLeads(activeCampaign.id, ids)
+      const count = ids.length
+      setDeleteBatchTarget(null)
+      setSearch('')
+      showToast(`Deleted ${count} lead${count === 1 ? '' : 's'}`)
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Could not delete leads')
     } finally {
       setBusy(false)
     }
@@ -530,6 +549,18 @@ export default function App() {
           busy={busy}
           onConfirm={handleConfirmDeleteLead}
           onClose={() => setDeleteLeadTarget(null)}
+        />
+      )}
+
+      {/* Delete Search Results Batch Confirm Modal */}
+      {deleteBatchTarget && (
+        <ConfirmModal
+          title={`Delete ${deleteBatchTarget.leads.length} Search Result${deleteBatchTarget.leads.length === 1 ? '' : 's'}?`}
+          message={`Are you sure you want to permanently delete all ${deleteBatchTarget.leads.length} lead${deleteBatchTarget.leads.length === 1 ? '' : 's'} matching "${deleteBatchTarget.query}"? This action cannot be undone.`}
+          confirmLabel={`Delete ${deleteBatchTarget.leads.length} Lead${deleteBatchTarget.leads.length === 1 ? '' : 's'}`}
+          busy={busy}
+          onConfirm={handleConfirmDeleteBatch}
+          onClose={() => setDeleteBatchTarget(null)}
         />
       )}
     </div>
@@ -821,24 +852,45 @@ export default function App() {
         </div>
 
         {/* Search Leads - Below Tabs */}
-        <div className="relative">
-          <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name, company, or phone number…"
-            className="w-full rounded-xl border-0 bg-white pl-10 pr-9 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-400 shadow-xs"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors"
-              title="Clear search"
-              aria-label="Clear search"
-            >
-              <XIcon className="w-3.5 h-3.5" />
-            </button>
+        <div className="space-y-2">
+          <div className="relative">
+            <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, company, or phone number…"
+              className="w-full rounded-xl border-0 bg-white pl-10 pr-9 py-2.5 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-brand-400 outline-none placeholder:text-slate-400 shadow-xs"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100 transition-colors"
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {search.trim() && (
+            <div className="flex items-center justify-between px-1 text-xs text-slate-500">
+              <span>
+                Found <strong className="text-slate-800 font-semibold">{filteredLeads.length}</strong> {filteredLeads.length === 1 ? 'result' : 'results'} for &ldquo;{search.trim()}&rdquo;
+              </span>
+              {filteredLeads.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setDeleteBatchTarget({ leads: filteredLeads, query: search.trim() })}
+                  className="inline-flex items-center gap-1 font-medium text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 px-2 py-1 rounded-lg transition-colors active:scale-95"
+                  title={`Delete all ${filteredLeads.length} matching leads`}
+                >
+                  <TrashIcon className="w-3.5 h-3.5" />
+                  <span>Delete all ({filteredLeads.length})</span>
+                </button>
+              )}
+            </div>
           )}
         </div>
 

@@ -281,6 +281,17 @@ export async function deleteLead(campaignId: string, leadId: string): Promise<vo
   await deleteDoc(doc(leadsCol(campaignId), leadId))
 }
 
+export async function deleteLeads(campaignId: string, leadIds: string[]): Promise<void> {
+  for (let i = 0; i < leadIds.length; i += MAX_BATCH) {
+    const batch = writeBatch(db)
+    const chunk = leadIds.slice(i, i + MAX_BATCH)
+    chunk.forEach((id) => {
+      batch.delete(doc(leadsCol(campaignId), id))
+    })
+    await batch.commit()
+  }
+}
+
 export async function resetLeadToNew(campaignId: string, leadId: string): Promise<void> {
   const ref = doc(leadsCol(campaignId), leadId)
   await updateDoc(ref, {
