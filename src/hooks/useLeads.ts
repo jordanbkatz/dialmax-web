@@ -1,22 +1,92 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getFieldConfig, saveFieldConfig, subscribeLeads } from '../lib/firestore'
-import type { Lead, LeadField } from '../types'
+import {
+  createCampaign as fsCreateCampaign,
+  deleteCampaign as fsDeleteCampaign,
+  getFieldConfig,
+  removeCollaborator as fsRemoveCollaborator,
+  saveFieldConfig,
+  shareCampaign as fsShareCampaign,
+  subscribeCampaigns,
+  subscribeLeads,
+  updateCampaign as fsUpdateCampaign,
+} from '../lib/firestore'
+import type { Campaign, Lead, LeadField } from '../types'
 import { headerToKey, keyToLabel } from '../lib/csv'
 
-export function useLeads(uid: string | null) {
-  const [leads, setLeads] = useState<Lead[]>([])
+export function useCampaigns(uid: string | null, userEmail: string | null) {
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!uid) {
+      setCampaigns([])
+      setLoading(false)
+      return
+    }
+    setLoading(true)
+    const unsub = subscribeCampaigns(
+      uid,
+      userEmail,
+      (cList) => {
+        setCampaigns(cList)
+        setLoading(false)
+      },
+      (err) => {
+        setError(err.message)
+        setLoading(false)
+      },
+    )
+    return unsub
+  }, [uid, userEmail])
+
+  const create = async (name: string): Promise<string> => {
+    if (!uid || !userEmail) throw new Error('Not authenticated')
+    return await fsCreateCampaign(uid, userEmail, name)
+  }
+
+  const update = async (campaignId: string, data: { name?: string }) => {
+    await fsUpdateCampaign(campaignId, data)
+  }
+
+  const remove = async (campaignId: string) => {
+    await fsDeleteCampaign(campaignId)
+  }
+
+  const share = async (campaignId: string, email: string) => {
+    await fsShareCampaign(campaignId, email)
+  }
+
+  const removeShared = async (campaignId: string, email: string) => {
+    await fsRemoveCollaborator(campaignId, email)
+  }
+
+  return {
+    campaigns,
+    loading,
+    error,
+    createCampaign: create,
+    updateCampaign: update,
+    deleteCampaign: remove,
+    shareCampaign: share,
+    removeCollaborator: removeShared,
+  }
+}
+
+export function useLeads(campaignId: string | null) {
+  const [leads, setLeads] = useState<Lead[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!campaignId) {
       setLeads([])
       setLoading(false)
       return
     }
     setLoading(true)
     const unsub = subscribeLeads(
-      uid,
+      campaignId,
       (ls) => {
         setLeads(ls)
         setLoading(false)
@@ -27,28 +97,31 @@ export function useLeads(uid: string | null) {
       },
     )
     return unsub
-  }, [uid])
+  }, [campaignId])
 
   return { leads, loading, error }
 }
 
 /**
- * Field configuration persisted per user in Firestore.
- * `allKeys` is the union of dynamic field keys found across leads,
- * so fields from CSV uploads can be reclassified at any time.
+ * Field configuration persisted per campaign in Firestore.
+ * `allKeys` is the union of dynamic field keys found across leads in this campaign.
  */
-export function useFieldConfig(uid: string | null, leads: Lead[]) {
+export function useFieldConfig(campaignId: string | null, leads: Lead[]) {
   const [config, setConfig] = useState<LeadField[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    if (!uid) return
+    if (!campaignId) {
+      setConfig([])
+      setLoaded(true)
+      return
+    }
     setLoaded(false)
-    getFieldConfig(uid)
+    getFieldConfig(campaignId)
       .then((fields) => setConfig(fields))
       .catch(() => {})
       .finally(() => setLoaded(true))
-  }, [uid])
+  }, [campaignId])
 
   const allKeys = useMemo(() => {
     const keys = new Set<string>()
@@ -65,7 +138,7 @@ export function useFieldConfig(uid: string | null, leads: Lead[]) {
 
   const persist = async (fields: LeadField[]) => {
     setConfig(fields)
-    if (uid) await saveFieldConfig(uid, fields).catch(() => {})
+    if (campaignId) await saveFieldConfig(campaignId, fields).catch(() => {})
   }
 
   const toggleImportant = async (key: string) => {

@@ -2,9 +2,22 @@ import type { Timestamp } from 'firebase/firestore'
 
 export type LeadResult = 'positive' | 'negative' | 'indeterminate'
 export type LeadStatus = 'new' | 'called'
+export type LeadFilter = 'all' | 'queue' | 'finished'
+
+export interface Campaign {
+  id: string
+  name: string
+  ownerUid: string
+  ownerEmail: string
+  sharedWithEmails: string[]
+  memberUids: string[]
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
 
 export interface Lead {
   id: string
+  campaignId: string
   /** Dynamic field map — everything that came from CSV or manual entry */
   fields: Record<string, string>
   /** Denormalized for display + search */

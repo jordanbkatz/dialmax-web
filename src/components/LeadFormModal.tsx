@@ -63,7 +63,7 @@ export default function LeadFormModal({ lead, importantFields, busy, onClose, on
           <h2 className="text-base font-semibold text-slate-900">
             {lead ? 'Edit lead' : 'New lead'}
           </h2>
-          <button onClick={onClose} className="p-2 -mr-2 rounded-xl text-slate-400 hover:bg-slate-100" aria-label="Close">
+          <button onClick={onClose} className="p-2 -mr-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all duration-150" aria-label="Close">
             <XIcon />
           </button>
         </div>
@@ -110,7 +110,7 @@ export default function LeadFormModal({ lead, importantFields, busy, onClose, on
                   />
                   <button
                     onClick={() => removeRow(idx)}
-                    className="shrink-0 p-2.5 rounded-xl text-slate-300 hover:text-rose-500"
+                    className="shrink-0 p-2.5 rounded-xl text-slate-300 hover:text-rose-500 hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all duration-150"
                     aria-label="Remove field"
                   >
                     <TrashIcon className="w-4 h-4" />
@@ -122,7 +122,7 @@ export default function LeadFormModal({ lead, importantFields, busy, onClose, on
 
           <button
             onClick={addRow}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-600 active:scale-[0.98] transition"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
           >
             <PlusIcon className="w-4 h-4" />
             Add field
@@ -139,7 +139,7 @@ export default function LeadFormModal({ lead, importantFields, busy, onClose, on
           <button
             onClick={handleSave}
             disabled={!canSave}
-            className="w-full rounded-2xl bg-brand-600 px-4 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
+            className="w-full rounded-2xl bg-brand-600 px-4 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-500 hover:shadow-xl hover:shadow-brand-600/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-40 disabled:shadow-none disabled:hover:bg-brand-600 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-150"
           >
             {busy ? 'Saving…' : lead ? 'Save changes' : 'Add lead'}
           </button>

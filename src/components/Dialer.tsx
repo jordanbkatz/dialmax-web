@@ -36,7 +36,7 @@ export default function Dialer({
         </p>
         <button
           onClick={onBackToQueue}
-          className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white active:scale-[0.98] transition"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
         >
           Back to leads
           <ChevronRightIcon className="w-4 h-4" />
@@ -104,7 +104,7 @@ export default function Dialer({
 
         <a
           href={telHref(lead.phone)}
-          className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-emerald-500 px-4 py-[1.1rem] text-lg font-bold text-white shadow-lg shadow-emerald-500/30 transition active:scale-[0.98]"
+          className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-emerald-500 px-4 py-[1.1rem] text-lg font-bold text-white shadow-lg shadow-emerald-500/30 hover:bg-emerald-400 hover:shadow-xl hover:shadow-emerald-500/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
         >
           <PhoneIcon className="w-6 h-6" />
           Call {formatPhone(lead.phone)}
@@ -113,14 +113,14 @@ export default function Dialer({
         <div className="mt-3 flex gap-2">
           <button
             onClick={onSkip}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 active:scale-[0.98] transition"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-200 hover:text-slate-900 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.98] transition-all duration-150"
           >
             <SkipIcon className="w-4 h-4" />
             Skip
           </button>
           <button
             onClick={onLogResult}
-            className="flex-[2] rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white active:scale-[0.98] transition"
+            className="flex-[2] rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
           >
             Log call result
           </button>

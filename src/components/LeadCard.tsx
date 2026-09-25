@@ -77,7 +77,7 @@ export default function LeadCard({
             </div>
             <a
               href={telHref(lead.phone)}
-              className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600"
+              className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline transition-colors"
             >
               <PhoneIcon className="w-3.5 h-3.5" />
               {formatPhone(lead.phone)}
@@ -86,7 +86,7 @@ export default function LeadCard({
           {hasExtra && (
             <button
               onClick={() => setExpanded((v) => !v)}
-              className="shrink-0 p-1.5 -m-1.5 rounded-lg text-slate-400 hover:text-slate-600"
+              className="shrink-0 p-1.5 -m-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition-all duration-150"
               aria-label={expanded ? 'Collapse details' : 'Expand details'}
             >
               <ChevronDownIcon
@@ -142,7 +142,7 @@ export default function LeadCard({
           {lead.status === 'called' ? (
             <button
               onClick={() => onReset(lead)}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 active:scale-[0.98] transition"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-200 hover:text-slate-900 hover:-translate-y-0.5 hover:shadow-sm active:translate-y-0 active:scale-[0.98] transition-all duration-150"
             >
               <RefreshIcon className="w-4 h-4" />
               Requeue
@@ -150,7 +150,7 @@ export default function LeadCard({
           ) : (
             <button
               onClick={() => onCall(lead)}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-600/30 active:scale-[0.98] transition"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-brand-600/30 hover:bg-brand-500 hover:shadow-md hover:shadow-brand-600/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
             >
               <PhoneIcon className="w-4 h-4" />
               Call
@@ -158,7 +158,7 @@ export default function LeadCard({
           )}
           <button
             onClick={() => onLogResult(lead)}
-            className="flex-1 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white active:scale-[0.98] transition"
+            className="flex-1 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
           >
             {lead.status === 'called' ? 'Update result' : 'Log result'}
           </button>
@@ -186,14 +186,14 @@ export default function LeadCard({
           <div className="mt-3 pt-3 border-t border-slate-200/70 flex justify-end gap-1">
             <button
               onClick={() => onEdit(lead)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-200/60"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-200/80 hover:scale-105 active:scale-95 transition-all duration-150"
             >
               <PencilIcon className="w-3.5 h-3.5" />
               Edit
             </button>
             <button
               onClick={() => onDelete(lead)}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-500 hover:bg-rose-50"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50 hover:scale-105 active:scale-95 transition-all duration-150"
             >
               <TrashIcon className="w-3.5 h-3.5" />
               Delete

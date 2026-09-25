@@ -66,7 +66,7 @@ export default function ResultSheet({ lead, busy, onSave, onClose }: ResultSheet
           </div>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 rounded-xl text-slate-400 hover:bg-slate-100"
+            className="p-2 -mr-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all duration-150"
             aria-label="Close"
           >
             <XIcon />
@@ -84,10 +84,10 @@ export default function ResultSheet({ lead, busy, onSave, onClose }: ResultSheet
                   <button
                     key={r}
                     onClick={() => setResult(r)}
-                    className={`relative flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3.5 text-sm font-semibold ring-1 transition active:scale-[0.97] ${
+                    className={`relative flex flex-col items-center gap-1.5 rounded-2xl px-2 py-3.5 text-sm font-semibold ring-1 transition-all duration-150 active:scale-[0.97] ${
                       selected
-                        ? `${meta.button} text-white ring-transparent shadow-md`
-                        : 'bg-white text-slate-600 ring-slate-200 hover:ring-slate-300'
+                        ? `${meta.button} text-white ring-transparent shadow-md hover:brightness-105 hover:shadow-lg hover:-translate-y-0.5`
+                        : 'bg-white text-slate-600 ring-slate-200 hover:ring-slate-300 hover:bg-slate-50 hover:text-slate-900 hover:-translate-y-0.5 hover:shadow-sm'
                     }`}
                   >
                     {selected && (
@@ -150,10 +150,10 @@ export default function ResultSheet({ lead, busy, onSave, onClose }: ResultSheet
               </div>
               <button
                 onClick={() => setEmailFollowUp((v) => !v)}
-                className={`w-full flex items-center justify-between rounded-2xl px-4 py-3.5 ring-1 transition active:scale-[0.99] ${
+                className={`w-full flex items-center justify-between rounded-2xl px-4 py-3.5 ring-1 transition-all duration-150 active:scale-[0.99] hover:shadow-sm ${
                   emailFollowUp
-                    ? 'bg-sky-50 ring-sky-300'
-                    : 'bg-white ring-slate-200'
+                    ? 'bg-sky-50 ring-sky-300 hover:bg-sky-100/70'
+                    : 'bg-white ring-slate-200 hover:bg-slate-50 hover:ring-slate-300'
                 }`}
               >
                 <span className="flex items-center gap-2 text-sm font-semibold text-slate-700">
@@ -191,7 +191,7 @@ export default function ResultSheet({ lead, busy, onSave, onClose }: ResultSheet
           <button
             onClick={handleSave}
             disabled={!canSave || busy}
-            className="w-full rounded-2xl bg-brand-600 px-4 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/25 transition active:scale-[0.98] disabled:opacity-40 disabled:shadow-none"
+            className="w-full rounded-2xl bg-brand-600 px-4 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/25 hover:bg-brand-500 hover:shadow-xl hover:shadow-brand-600/35 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-40 disabled:shadow-none disabled:hover:bg-brand-600 disabled:hover:translate-y-0 disabled:cursor-not-allowed transition-all duration-150"
           >
             {busy ? 'Saving…' : 'Save result'}
           </button>

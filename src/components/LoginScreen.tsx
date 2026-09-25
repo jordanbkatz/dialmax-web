@@ -33,7 +33,7 @@ export default function LoginScreen({ onSignIn }: { onSignIn: () => Promise<void
         <button
           onClick={handleSignIn}
           disabled={busy}
-          className="mt-10 w-full flex items-center justify-center gap-3 rounded-2xl bg-white px-4 py-4 text-base font-semibold text-slate-800 shadow-lg shadow-brand-900/20 transition active:scale-[0.98] disabled:opacity-60"
+          className="mt-10 inline-flex items-center justify-center gap-3 rounded-2xl bg-white px-8 py-4 text-base font-semibold text-slate-800 shadow-lg shadow-brand-900/20 transition-all duration-200 hover:bg-slate-50 hover:shadow-xl hover:shadow-brand-900/30 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-lg disabled:hover:bg-white"
         >
           {busy ? (
             <span className="w-5 h-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin" />

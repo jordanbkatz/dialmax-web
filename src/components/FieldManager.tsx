@@ -37,7 +37,7 @@ export default function FieldManager({
             <h2 className="text-base font-semibold text-slate-900">Lead fields</h2>
             <p className="text-xs text-slate-400 mt-0.5">Star fields to always show them on cards.</p>
           </div>
-          <button onClick={onClose} className="p-2 -mr-2 rounded-xl text-slate-400 hover:bg-slate-100" aria-label="Close">
+          <button onClick={onClose} className="p-2 -mr-2 rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700 active:scale-95 transition-all duration-150" aria-label="Close">
             <XIcon />
           </button>
         </div>
@@ -58,7 +58,7 @@ export default function FieldManager({
                     <button
                       onClick={() => onToggleImportant(key)}
                       disabled={busy}
-                      className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-lg transition ${
+                      className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-lg transition-transform hover:scale-110 active:scale-95 ${
                         isImportant ? 'text-amber-400' : 'text-slate-200 hover:text-slate-300'
                       }`}
                       aria-label={isImportant ? 'Remove from card' : 'Always show on card'}
@@ -75,7 +75,7 @@ export default function FieldManager({
                         <button
                           onClick={() => onMove(key, -1)}
                           disabled={busy || idx <= 0}
-                          className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                          className="p-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors"
                           aria-label="Move up"
                         >
                           <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
@@ -83,7 +83,7 @@ export default function FieldManager({
                         <button
                           onClick={() => onMove(key, 1)}
                           disabled={busy || idx >= importantKeys.length - 1}
-                          className="p-0.5 text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                          className="p-0.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400 transition-colors"
                           aria-label="Move down"
                         >
                           <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
@@ -100,7 +100,7 @@ export default function FieldManager({
         <div className="px-5 pb-5 pt-2 border-t border-slate-100">
           <button
             onClick={onClose}
-            className="w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-base font-semibold text-white transition active:scale-[0.98]"
+            className="w-full rounded-2xl bg-slate-900 px-4 py-3.5 text-base font-semibold text-white hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-150"
           >
             Done
           </button>
